@@ -60,6 +60,7 @@ struct CropperView: View {
     
     let imageName = "arrow.up.left.and.down.right.and.arrow.up.right.and.down.left"
     
+    //MARK: - Body
     var body: some View {
         ZStack {
             //Black background
@@ -103,7 +104,7 @@ struct CropperView: View {
                         semiTransparentMask
                     }
                            
-                    //Top-Leading
+                    //MARK: - Top-Leading
                     Image(systemName: imageName)
                         .font(.system(size: 12))
                         .foregroundColor(cropVerticesColor)
@@ -146,7 +147,7 @@ struct CropperView: View {
                             }
                         )
                     
-                    //Bottom-Leading
+                    //MARK: - Bottom-Leading
                     Image(systemName: imageName)
                         .font(.system(size: 12))
                         .foregroundColor(cropVerticesColor)
@@ -188,7 +189,7 @@ struct CropperView: View {
                             }
                         )
 
-                    //Bottom-Trailing
+                    //MARK: - Bottom-Trailing
                     Image(systemName: imageName)
                         .font(.system(size: 12))
                         .foregroundColor(cropVerticesColor)
@@ -228,7 +229,7 @@ struct CropperView: View {
                             }
                         )
 
-                    //Bottom-Topping
+                    //MARK: - Top-Trailing
                     Image(systemName: imageName)
                         .font(.system(size: 12))
                         .foregroundColor(cropVerticesColor)
@@ -296,6 +297,7 @@ struct CropperView: View {
         }
     }
     
+    //MARK: - SemiTransparentMask
     var semiTransparentMask: some View {
         ZStack {
             // Peripheral semi-transparent mask
@@ -366,8 +368,12 @@ struct CropperView: View {
                             operateOnEnd()
                     })
             
-            //Sides
-            //Top
+            //MARK: - Sides
+            
+            
+            
+            
+            //MARK: - Top
             Rectangle()
                 .frame(width: cropWidth + cropWidthAdd, height: 2)
                 .offset(x: currentPositionS.width, y: currentPositionS.height - cropHeight/2)
@@ -396,7 +402,7 @@ struct CropperView: View {
                     }
                 )
             
-            //Buttom
+            //MARK: - Buttom
             Rectangle()
                 .frame(width: cropWidth + cropWidthAdd, height: 2)
                 .foregroundColor(cropBorderColor)
@@ -425,7 +431,7 @@ struct CropperView: View {
                     }
                 )
             
-            //Leading
+            //MARK: - Leading
             Rectangle()
                 .frame(width: 2, height: cropHeight + cropHeightAdd)
                 .foregroundColor(cropBorderColor)
@@ -457,7 +463,7 @@ struct CropperView: View {
                     }
                 )
             
-            //Trailing
+            //MARK: - Trailing
             Rectangle()
                 .frame(width: 2, height: cropHeight + cropHeightAdd)
                 .foregroundColor(cropBorderColor)
