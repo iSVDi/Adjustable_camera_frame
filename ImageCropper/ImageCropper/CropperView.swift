@@ -59,9 +59,7 @@ struct CropperView: View {
     @State private var newPositionCrop: CGSize = .zero
     
     let imageName = "arrow.up.left.and.down.right.and.arrow.up.right.and.down.left"
-    
-    
-    
+        
     //MARK: - Body
     var body: some View {
         ZStack {
@@ -71,25 +69,7 @@ struct CropperView: View {
                 .foregroundColor(.black)
             
             VStack {
-                //NaviBar
-                ZStack(alignment: .leading) {
-                    Rectangle()
-                        .frame(height: (UIDevice.current.model == "iPhone") ? screenHeight/5 : screenHeight/15)
-                        .foregroundColor(Color(red: 0.1, green: 0.1, blue: 0.1))
-                    
-                    VStack {
-                        Button(action: {
-                            self.presentationMode.wrappedValue.dismiss()
-                        }, label: {
-                            Image(systemName: "chevron.backward")
-                                .padding()
-                                .foregroundColor(Color.white)
-                        })
-                    }
-                    .offset(y: (UIDevice.current.model == "iPhone") ? 10 : 5)
-                }
-                .ignoresSafeArea()
-                
+                naviBar
                 ZStack {
                     ZStack {
                         Image(uiImage: inputImage)
@@ -144,6 +124,94 @@ struct CropperView: View {
             }
             
             print("screenWidth: \(screenWidth), screenHeight: \(screenHeight)")
+        }
+    }
+    
+    var naviBar: some View {
+        //NaviBar
+        ZStack(alignment: .leading) {
+            Rectangle()
+                .frame(height: (UIDevice.current.model == "iPhone") ? screenHeight/5 : screenHeight/15)
+                .foregroundColor(Color(red: 0.1, green: 0.1, blue: 0.1))
+            
+            VStack {
+                Button(action: {
+                    self.presentationMode.wrappedValue.dismiss()
+                }, label: {
+                    Image(systemName: "chevron.backward")
+                        .padding()
+                        .foregroundColor(Color.white)
+                })
+            }
+            .offset(y: (UIDevice.current.model == "iPhone") ? 10 : 5)
+        }
+        .ignoresSafeArea()
+    }
+    
+    //MARK: - SemiTransparentMask
+    var semiTransparentMask: some View {
+        ZStack {
+            // Peripheral semi-transparent mask
+            //left side
+            Rectangle()
+                .foregroundColor(.black)
+                .opacity(cropperOutsideOpacity)
+                .frame(width: (imageDisplayWidth/2 - (cropWidth/2 - currentPositionCrop.width + cropWidthAdd/2)))
+                .offset(x: -imageDisplayWidth/2 + (imageDisplayWidth/2 - (cropWidth/2 - currentPositionCrop.width + cropWidthAdd/2))/2)
+            //Right
+            Rectangle()
+                .foregroundColor(.black)
+                .opacity(cropperOutsideOpacity)
+                .frame(width: imageDisplayWidth/2 - (cropWidth/2 + currentPositionCrop.width + cropWidthAdd/2))
+                .offset(x: imageDisplayWidth/2 - (imageDisplayWidth/2 - (cropWidth/2 + currentPositionCrop.width + cropWidthAdd/2))/2)
+            // top
+            Rectangle()
+                .foregroundColor(.black)
+                .opacity(cropperOutsideOpacity)
+                .frame(width: cropWidth + cropWidthAdd, height: imageDisplayHeight/2 - (cropHeight/2 - currentPositionCrop.height + cropHeightAdd/2))
+                .offset(x: currentPositionCrop.width, y: -imageDisplayHeight/2 + (imageDisplayHeight/2 - (cropHeight/2 - currentPositionCrop.height + cropHeightAdd/2))/2)
+            //Bottom
+            Rectangle()
+                .foregroundColor(.black)
+                .opacity(cropperOutsideOpacity)
+                .frame(width: cropWidth + cropWidthAdd, height: imageDisplayHeight/2 - (cropHeight/2 + currentPositionCrop.height + cropHeightAdd/2))
+                .offset(x: currentPositionCrop.width, y: imageDisplayHeight/2 - (imageDisplayHeight/2 - (cropHeight/2 + currentPositionCrop.height + cropHeightAdd/2))/2)
+            
+            //Cutout box
+            Rectangle()
+                .fill(Color.white.opacity(0.01))
+                .frame(width: cropWidth+cropWidthAdd, height: cropHeight+cropHeightAdd)
+                .offset(x: currentPositionCrop.width, y: currentPositionCrop.height)
+                .gesture(cutoutBoxGesture)
+            
+            //MARK: - Sides
+            
+            
+            
+            //MARK: - Top
+            side(
+                size: .init(width: cropWidth + cropWidthAdd, height: 2),
+                offset: .init(x: currentPositionS.width, y: currentPositionS.height - cropHeight/2),
+                padding: .vertical
+            )
+            //MARK: - Buttom
+            side(
+                size: .init(width: cropWidth + cropWidthAdd, height: 2),
+                offset: .init(x: currentPositionX.width, y: currentPositionX.height+cropHeight/2),
+                padding: .vertical
+            )
+            //MARK: - Leading
+            side(
+                size: .init(width: 2, height: cropHeight + cropHeightAdd),
+                offset: .init(x: currentPositionZ.width-cropWidth/2, y: currentPositionZ.height),
+                padding: .horizontal
+            )
+            //MARK: - Trailing
+            side(
+                size: .init(width: 2, height: cropHeight + cropHeightAdd),
+                offset: .init(x: currentPositionY.width + cropWidth/2, y: currentPositionY.height),
+                padding: .horizontal
+            )
         }
     }
     
@@ -280,6 +348,8 @@ struct CropperView: View {
             cropHeightAdd = -value.translation.height
         }
     }
+    
+    
     var cutoutBoxGesture: some Gesture {
         DragGesture()
             .onChanged { value in
@@ -289,23 +359,15 @@ struct CropperView: View {
                 currentPositionCrop.width = min(max(value.translation.width + newPositionCrop.width, -imageDisplayWidth/2+cropWidth/2), imageDisplayWidth/2-cropWidth/2)
                 currentPositionCrop.height = min(max(value.translation.height + newPositionCrop.height, -imageDisplayHeight/2+cropHeight/2), imageDisplayHeight/2-cropHeight/2)
                 // The coordinates of the corners are actually the same as Crop's, except that the zs and such are subtracted by half the offset of Crop's as an additional offset.
-                currentPositionZS.width = currentPositionCrop.width
-                currentPositionZS.height = currentPositionCrop.height
-                currentPositionZX.width = currentPositionCrop.width
-                currentPositionZX.height = currentPositionCrop.height
-                currentPositionYX.width = currentPositionCrop.width
-                currentPositionYX.height = currentPositionCrop.height
-                currentPositionYS.width = currentPositionCrop.width
-                currentPositionYS.height = currentPositionCrop.height
+                currentPositionZS = currentPositionCrop
+                currentPositionZX = currentPositionCrop
+                currentPositionYX = currentPositionCrop
+                currentPositionYS = currentPositionCrop
                 
-                currentPositionS.width = currentPositionCrop.width
-                currentPositionS.height = currentPositionCrop.height
-                currentPositionZ.width = currentPositionCrop.width
-                currentPositionZ.height = currentPositionCrop.height
-                currentPositionX.width = currentPositionCrop.width
-                currentPositionX.height = currentPositionCrop.height
-                currentPositionY.width = currentPositionCrop.width
-                currentPositionY.height = currentPositionCrop.height
+                currentPositionS = currentPositionCrop
+                currentPositionZ = currentPositionCrop
+                currentPositionX = currentPositionCrop
+                currentPositionY = currentPositionCrop
             }
             .onEnded { value in
                 // At the end of the move, make the value of the current coordinate equal to the previous value plus the coordinate of the
@@ -317,78 +379,12 @@ struct CropperView: View {
             }
     }
     
-    
-    //MARK: - SemiTransparentMask
-    var semiTransparentMask: some View {
-        ZStack {
-            // Peripheral semi-transparent mask
-            //left side
-            Rectangle()
-                .foregroundColor(.black)
-                .opacity(cropperOutsideOpacity)
-                .frame(width: (imageDisplayWidth/2 - (cropWidth/2 - currentPositionCrop.width + cropWidthAdd/2)))
-                .offset(x: -imageDisplayWidth/2 + (imageDisplayWidth/2 - (cropWidth/2 - currentPositionCrop.width + cropWidthAdd/2))/2)
-            //Right
-            Rectangle()
-                .foregroundColor(.black)
-                .opacity(cropperOutsideOpacity)
-                .frame(width: imageDisplayWidth/2 - (cropWidth/2 + currentPositionCrop.width + cropWidthAdd/2))
-                .offset(x: imageDisplayWidth/2 - (imageDisplayWidth/2 - (cropWidth/2 + currentPositionCrop.width + cropWidthAdd/2))/2)
-            // top
-            Rectangle()
-                .foregroundColor(.black)
-                .opacity(cropperOutsideOpacity)
-                .frame(width: cropWidth + cropWidthAdd, height: imageDisplayHeight/2 - (cropHeight/2 - currentPositionCrop.height + cropHeightAdd/2))
-                .offset(x: currentPositionCrop.width, y: -imageDisplayHeight/2 + (imageDisplayHeight/2 - (cropHeight/2 - currentPositionCrop.height + cropHeightAdd/2))/2)
-            //Bottom
-            Rectangle()
-                .foregroundColor(.black)
-                .opacity(cropperOutsideOpacity)
-                .frame(width: cropWidth + cropWidthAdd, height: imageDisplayHeight/2 - (cropHeight/2 + currentPositionCrop.height + cropHeightAdd/2))
-                .offset(x: currentPositionCrop.width, y: imageDisplayHeight/2 - (imageDisplayHeight/2 - (cropHeight/2 + currentPositionCrop.height + cropHeightAdd/2))/2)
-            
-            //Cutout box
-            Rectangle()
-                .fill(Color.white.opacity(0.01))
-                .frame(width: cropWidth+cropWidthAdd, height: cropHeight+cropHeightAdd)
-                .offset(x: currentPositionCrop.width, y: currentPositionCrop.height)
-                .gesture(cutoutBoxGesture)
-            
-            //MARK: - Sides
-            
-            
-            
-            //MARK: - Top
-            Rectangle()
-                .frame(width: cropWidth + cropWidthAdd, height: 2)
-                .offset(x: currentPositionS.width, y: currentPositionS.height - cropHeight/2)
-                .foregroundColor(cropBorderColor)
-                .padding(.vertical)
-            
-            
-            //MARK: - Buttom
-            Rectangle()
-                .frame(width: cropWidth + cropWidthAdd, height: 2)
-                .foregroundColor(cropBorderColor)
-                .offset(x: currentPositionX.width, y: currentPositionX.height+cropHeight/2)
-                .padding(.vertical)
-            
-            
-            //MARK: - Leading
-            Rectangle()
-                .frame(width: 2, height: cropHeight + cropHeightAdd)
-                .foregroundColor(cropBorderColor)
-                .offset(x: currentPositionZ.width-cropWidth/2, y: currentPositionZ.height)
-                .padding(.horizontal)
-            
-            
-            //MARK: - Trailing
-            Rectangle()
-                .frame(width: 2, height: cropHeight + cropHeightAdd)
-                .foregroundColor(cropBorderColor)
-                .offset(x: currentPositionY.width + cropWidth/2, y: currentPositionY.height)
-                .padding(.horizontal)
-        }
+    func side(size: CGSize, offset: CGPoint, padding: Edge.Set) -> some View {
+        Rectangle()
+            .frame(width: size.width, height: size.height)
+            .foregroundColor(cropBorderColor)
+            .offset(x: offset.x, y: offset.y)
+            .padding(padding)
     }
     
     func crop() {
@@ -408,30 +404,16 @@ struct CropperView: View {
         cropHeightAdd = 0
         
         //Conners
-        currentPositionZS.width = currentPositionCrop.width
-        currentPositionZS.height = currentPositionCrop.height
-        
-        currentPositionZX.width = currentPositionCrop.width
-        currentPositionZX.height = currentPositionCrop.height
-        
-        currentPositionYX.width = currentPositionCrop.width
-        currentPositionYX.height = currentPositionCrop.height
-        
-        currentPositionYS.width = currentPositionCrop.width
-        currentPositionYS.height = currentPositionCrop.height
+        currentPositionZS = currentPositionCrop
+        currentPositionZX = currentPositionCrop
+        currentPositionYX = currentPositionCrop
+        currentPositionYS = currentPositionCrop
         
         //Sides
-        currentPositionS.width = currentPositionCrop.width
-        currentPositionS.height = currentPositionCrop.height
-        
-        currentPositionZ.width = currentPositionCrop.width
-        currentPositionZ.height = currentPositionCrop.height
-        
-        currentPositionX.width = currentPositionCrop.width
-        currentPositionX.height = currentPositionCrop.height
-        
-        currentPositionY.width = currentPositionCrop.width
-        currentPositionY.height = currentPositionCrop.height
+        currentPositionS = currentPositionCrop
+        currentPositionZ = currentPositionCrop
+        currentPositionX = currentPositionCrop
+        currentPositionY = currentPositionCrop
         
         self.newPositionCrop = self.currentPositionCrop
         self.newPositionZS = self.currentPositionZS
