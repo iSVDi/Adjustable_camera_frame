@@ -80,7 +80,7 @@ struct CropperViewX: View {
             Spacer()
             
             Button {
-                print("crop handler")
+                crop()
             } label: {
                 Image(systemName: "crop")
                     .padding(.all, 10)
@@ -283,12 +283,46 @@ struct CropperViewX: View {
     }
     
     func traillingHandler(_ value : DragGesture.Value) {
-        currentPositionYS.width = min(max(value.translation.width + lastPositionYS.width, 0), imageDisplayHeight)
-        currentPositionYX.width = min(max(value.translation.width + lastPositionYX.width, 0), imageDisplayHeight)
+        currentPositionYS.width = min(max(value.translation.width + lastPositionYS.width, 0), imageDisplayWidth)
+        currentPositionYX.width = min(max(value.translation.width + lastPositionYX.width, 0), imageDisplayWidth)
     }
     
     
     //MARK: -
+    
+    func crop() {
+        let rect = CGRect(
+            x: lastPositionZS.width,
+            y: lastPositionZS.height,
+            width: cropWidth,
+            height: cropHeight
+        )
+        let croppedImage = cropImage(inputImage, toRect: rect)
+        
+        self.croppedImage = croppedImage
+        self.presentationMode.wrappedValue.dismiss()
+    }
+    
+
+    
+    func cropImage(_ inputImage: UIImage, toRect: CGRect) -> UIImage {
+        let cgImage = inputImage.cgImage!
+        let scaler = CGFloat(cgImage.width) / imageDisplayWidth
+        let cgCroppedImage = cgImage.cropping(
+            to: .init(
+                x: toRect.origin.x * scaler,
+                y: toRect.origin.y * scaler,
+                width: toRect.width * scaler,
+                height: toRect.height * scaler
+            )
+        )
+
+        let res = UIImage(cgImage: cgCroppedImage!)
+        return res
+    }
+    
+
+  
     
     func operateOnEnd() {
         self.lastPositionZS = self.currentPositionZS
