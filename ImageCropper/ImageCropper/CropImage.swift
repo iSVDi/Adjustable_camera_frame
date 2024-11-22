@@ -23,6 +23,10 @@ func cropImage(_ inputImage: UIImage, toRect cropRect: CGRect, viewWidth: CGFloa
         return nil
     }
     // Return image to UIImage
-    let croppedImage: UIImage = UIImage(cgImage: cutImageRef)
+    let croppedImage: UIImage = UIImage(
+        cgImage: cutImageRef,
+        scale: inputImage.scale,
+        orientation: inputImage.imageOrientation
+    )
     return croppedImage
 }

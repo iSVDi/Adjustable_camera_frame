@@ -9,7 +9,7 @@ import SwiftUI
 
 
 struct ContentView: View {
-    var inputimage = UIImage(named: "image")!
+    var inputimage = UIImage(named: "image2")!
     @State private var croppedImage: UIImage = UIImage()
     @State private var showCropper = false
     
@@ -25,7 +25,22 @@ struct ContentView: View {
                         .bold()
                     ZStack {
                         // This will navigate into cropper view
-                        NavigationLink(destination: CropperView(inputImage: inputimage, croppedImage: $croppedImage),isActive: $showCropper) { EmptyView() }
+//                        NavigationLink(
+//                            destination: CropperView(
+//                                inputImage: inputimage,
+//                                croppedImage: $croppedImage),
+//                            isActive: $showCropper
+//                        ) {
+//                            EmptyView()
+//                        }
+                        NavigationLink(
+                            destination: CropperViewX(
+                                inputImage: inputimage,
+                                croppedImage: $croppedImage),
+                            isActive: $showCropper
+                        ) {
+                            EmptyView()
+                        }
                         
                         VStack {
                             VStack(alignment: .leading) {
