@@ -48,11 +48,8 @@ struct CropperViewX: View {
     }
     
     var body: some View {
-        
         VStack {
-            
             ZStack(alignment: .topLeading) {
-                
                 Image(uiImage: inputImage)
                     .resizable()
                     .scaledToFit()
@@ -142,23 +139,27 @@ struct CropperViewX: View {
             
                         //MARK: - Top
                         side(
-                            size: .init(width: cropWidth, height: 2),
-                            offset: .init(x: currentPositionZS.width, y: currentPositionZS.height)
+                            size: .init(width: cropWidth, height: 10),
+                            offset: .init(x: currentPositionZS.width, y: currentPositionZS.height),
+                            topHandler
                         )
                         //MARK: - Buttom
                         side(
-                            size: .init(width: cropWidth, height: 2),
-                            offset: .init(x: currentPositionZX.width, y: currentPositionZX.height)
+                            size: .init(width: cropWidth, height: 10),
+                            offset: .init(x: currentPositionZX.width, y: currentPositionZX.height),
+                            bottomHandler
                         )
                         //MARK: - Leading
                         side(
-                            size: .init(width: 2, height: cropHeight),
-                            offset: .init(x: currentPositionZS.width, y: currentPositionZS.height)
+                            size: .init(width: 10, height: cropHeight),
+                            offset: .init(x: currentPositionZS.width, y: currentPositionZS.height),
+                            leadingHandler
                         )
                         //MARK: - Trailing
                         side(
-                            size: .init(width: 2, height: cropHeight),
-                            offset: .init(x: currentPositionYS.width, y: currentPositionYS.height)
+                            size: .init(width: 10, height: cropHeight),
+                            offset: .init(x: currentPositionYS.width, y: currentPositionYS.height),
+                            traillingHandler
                         )
         }
     }
@@ -194,20 +195,29 @@ struct CropperViewX: View {
             .offset(x: offsetX, y: offsetY)
             .gesture(
                 DragGesture()
-                    .onChanged { value in
-                        onChangedHandler(value)
-                    }
+                    .onChanged(onChangedHandler)
                     .onEnded { value in
                         operateOnEnd()
                     }
             )
     }
     
-    func side(size: CGSize, offset: CGPoint) -> some View {
+    func side(
+        size: CGSize,
+        offset: CGPoint,
+        _ onChangeHandler: @escaping (DragGesture.Value) -> Void
+    ) -> some View {
         Rectangle()
             .frame(width: size.width, height: size.height)
             .foregroundColor(cropBorderColor)
             .offset(x: offset.x, y: offset.y)
+            .gesture(
+                DragGesture()
+                    .onChanged(onChangeHandler)
+                    .onEnded { value in
+                        operateOnEnd()
+                    }
+            )
     }
     
     //MARK: - Vertex handlers
@@ -254,7 +264,32 @@ struct CropperViewX: View {
         currentPositionZS.height = min(max(value.translation.height + lastPositionZS.height, 0), imageDisplayHeight)
     }
     
+    //MARK: - Sides handler
+    
+    func topHandler(_ value : DragGesture.Value) {
+        currentPositionYS.height = min(max(value.translation.height + lastPositionYS.height, 0), imageDisplayHeight)
+        currentPositionZS.height = min(max(value.translation.height + lastPositionZS.height, 0), imageDisplayHeight)
+    }
+    
+    func leadingHandler(_ value : DragGesture.Value) {
+        currentPositionZS.width = min(max(value.translation.width + lastPositionZS.width, 0), imageDisplayWidth)
+        currentPositionZX.width = min(max(value.translation.width + lastPositionZX.width, 0), imageDisplayWidth)
+        
+    }
+    
+    func bottomHandler(_ value : DragGesture.Value) {
+        currentPositionZX.height = min(max(value.translation.height + lastPositionZX.height, 0), imageDisplayHeight)
+        currentPositionYX.height = min(max(value.translation.height + lastPositionYX.height, 0), imageDisplayHeight)
+    }
+    
+    func traillingHandler(_ value : DragGesture.Value) {
+        currentPositionYS.width = min(max(value.translation.width + lastPositionYS.width, 0), imageDisplayHeight)
+        currentPositionYX.width = min(max(value.translation.width + lastPositionYX.width, 0), imageDisplayHeight)
+    }
+    
+    
     //MARK: -
+    
     func operateOnEnd() {
         self.lastPositionZS = self.currentPositionZS
         self.lastPositionZX = self.currentPositionZX
