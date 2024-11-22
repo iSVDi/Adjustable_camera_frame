@@ -15,129 +15,169 @@ struct CropperViewX: View {
     
     //Vertex pattern colors
     var cropVerticesColor: Color = Color.purple
+    //Mask Transparency
+    var cropperOutsideOpacity: Double = 0.4
+    //Border color
+    var cropBorderColor: Color? = Color.white
     
     @State private var isInitialSetupDone = false
     
     @State private var imageDisplayWidth: CGFloat = 0
     @State private var imageDisplayHeight: CGFloat = 0
     
-    @State private var cropWidth: CGFloat = UIScreen.main.bounds.height/3
-    @State private var cropHeight: CGFloat = UIScreen.main.bounds.height/3*0.5
-    @State private var cropWidthAdd: CGFloat = 0
-    @State private var cropHeightAdd: CGFloat = 0
-    
     @State private var currentPositionZS: CGSize = .zero
-    @State private var newPositionZS: CGSize = .zero
+    @State private var lastPositionZS: CGSize = .zero
     
     @State private var currentPositionZX: CGSize = .zero
-    @State private var newPositionZX: CGSize = .zero
+    @State private var lastPositionZX: CGSize = .zero
     
     @State private var currentPositionYX: CGSize = .zero
-    @State private var newPositionYX: CGSize = .zero
+    @State private var lastPositionYX: CGSize = .zero
     
     @State private var currentPositionYS: CGSize = .zero
-    @State private var newPositionYS: CGSize = .zero
-    
-    
-    @State private var currentPositionCrop: CGSize = .init(width: 50, height: 50)
-    @State private var newPositionCrop: CGSize = .init(width: 50, height: 50)
+    @State private var lastPositionYS: CGSize = .zero
     
     let imageName = "arrow.up.left.and.down.right.and.arrow.up.right.and.down.left"
     
+    var cropWidth: CGFloat {
+        currentPositionYS.width - currentPositionZS.width
+    }
+    
+    var cropHeight: CGFloat {
+        currentPositionZX.height - currentPositionZS.height
+    }
+    
     var body: some View {
-        ZStack {
-            //Black background
-            Rectangle()
-                .ignoresSafeArea()
-                .foregroundColor(.black)
+        
+        VStack {
             
-            VStack {
+            ZStack(alignment: .topLeading) {
                 
-                ZStack(alignment: .topLeading) {
-                    
-                        Image(uiImage: inputImage)
-                            .resizable()
-                            .scaledToFit()
-                            .background(
-                                GeometryReader { proxy in
-                                    Color.clear.onAppear {
-                                        //TODO: add initialSetupProperty and use for one setup vertex coordinates
-                                        self.imageDisplayWidth = proxy.size.width
-                                        self.imageDisplayHeight = proxy.size.height
-                                        setupInitialIfNeed()
-                                    }
-                                }
-                            )
-                            
-                        
-//                        semiTransparentMask
-                    
-                    
-                    //Top-Leading
-                    vertex(
-                        offsetX: currentPositionZS.width,
-                        offsetY: currentPositionZS.height,
-                        onChangedHandler: topLeadingDragHandler(
-                            value:
-                        )
+                Image(uiImage: inputImage)
+                    .resizable()
+                    .scaledToFit()
+                    .background(
+                        GeometryReader { proxy in
+                            Color.clear.onAppear {
+                                //TODO: add initialSetupProperty and use for one setup vertex coordinates
+                                self.imageDisplayWidth = proxy.size.width
+                                self.imageDisplayHeight = proxy.size.height
+                                setupInitialIfNeed()
+                            }
+                        }
                     )
-                    //Bottom-Leading
-                    vertex(
-                        offsetX: currentPositionZX.width,
-                        offsetY: currentPositionZX.height,
-                        onChangedHandler: bottomLeadingDragHandler(
-                            value:
-                        )
-                    )
-                    //Bottom-Trailing
-                    vertex(
-                        offsetX: currentPositionYX.width,
-                        offsetY: currentPositionYX.height,
-                        onChangedHandler: bottomTraililngDragHandler(
-                            value:
-                        )
-                    )
-                    //Top-Trailing
-                    vertex(
-                        offsetX: currentPositionYS.width,
-                        offsetY: currentPositionYS.height,
-                        onChangedHandler: topTraililngDragHandler(
-                            value:
-                        )
-                    )
-                    
-                }
                 
-                Spacer()
+                semiTransparentMask
                 
-                Button {
-                    print("crop handler")
-                } label: {
-                    Image(systemName: "crop")
-                        .padding(.all, 10)
-                        .foregroundColor(.white)
-                        .background(Color.gray.opacity(0.2))
-                }
-                .padding()
+                //Top-Leading
+                vertex(offsetX: currentPositionZS.width, offsetY: currentPositionZS.height, topLeadingDragHandler)
+                //Bottom-Leading
+                vertex(offsetX: currentPositionZX.width, offsetY: currentPositionZX.height, bottomLeadingDragHandler)
+                //Bottom-Trailing
+                vertex(offsetX: currentPositionYX.width, offsetY: currentPositionYX.height, bottomTraililngDragHandler)
+                //Top-Trailing
+                vertex(offsetX: currentPositionYS.width, offsetY: currentPositionYS.height, topTraililngDragHandler)
                 
             }
             
+            Spacer()
+            
+            Button {
+                print("crop handler")
+            } label: {
+                Image(systemName: "crop")
+                    .padding(.all, 10)
+                    .foregroundColor(.white)
+                    .background(Color.gray.opacity(0.2))
+            }
+            .padding()
+            
+        }
+        .frame(height: 400)
+        
+        
+    }
+    
+    //MARK: - SemiTransparentMask
+    var semiTransparentMask: some View {
+        ZStack(alignment: .topLeading) {
+            // Peripheral semi-transparent mask
+            //left side
+            Rectangle()
+                .foregroundColor(.black)
+                .opacity(cropperOutsideOpacity)
+                .frame(width: currentPositionZS.width, height: imageDisplayHeight)
+            
+            //Right
+            Rectangle()
+                .foregroundColor(.black)
+                .opacity(cropperOutsideOpacity)
+                .frame(width: imageDisplayWidth - currentPositionYS.width, height: imageDisplayHeight)
+                .offset(x: currentPositionYS.width)
+            
+            // top
+            Rectangle()
+                .foregroundColor(.black)
+                .opacity(cropperOutsideOpacity)
+                .frame(width: currentPositionYS.width - currentPositionZS.width, height: currentPositionZS.height)
+                .offset(x: currentPositionZS.width)
+            
+            //            Bottom
+            Rectangle()
+                .foregroundColor(.black)
+                .opacity(cropperOutsideOpacity)
+                .frame(
+                    width: currentPositionYS.width - currentPositionZS.width,
+                    height: imageDisplayHeight - currentPositionZX.height
+                )
+                .offset(x: currentPositionZS.width, y: currentPositionZX.height)
+            
+            //Cutout box
+            Rectangle()
+                .fill(Color.white.opacity(0.001))
+                .frame(width: cropWidth, height: cropHeight)
+                .offset(x: currentPositionZS.width, y: currentPositionZS.height)
+            
+            //MARK: - Sides
+            
+                        //MARK: - Top
+                        side(
+                            size: .init(width: cropWidth, height: 2),
+                            offset: .init(x: currentPositionZS.width, y: currentPositionZS.height)
+                        )
+                        //MARK: - Buttom
+                        side(
+                            size: .init(width: cropWidth, height: 2),
+                            offset: .init(x: currentPositionZX.width, y: currentPositionZX.height)
+                        )
+                        //MARK: - Leading
+                        side(
+                            size: .init(width: 2, height: cropHeight),
+                            offset: .init(x: currentPositionZS.width, y: currentPositionZS.height)
+                        )
+                        //MARK: - Trailing
+                        side(
+                            size: .init(width: 2, height: cropHeight),
+                            offset: .init(x: currentPositionYS.width, y: currentPositionYS.height)
+                        )
         }
     }
+    
+    
     
     func setupInitialIfNeed() {
         guard !isInitialSetupDone else { return }
         currentPositionZS = .init(width: 50, height: 50)
-        newPositionZS = .init(width: 50, height: 50)
+        lastPositionZS = .init(width: 50, height: 50)
         
         currentPositionZX = .init(width: 50, height: imageDisplayHeight - 50)
-        newPositionZX = .init(width: 50, height: imageDisplayHeight - 50)
+        lastPositionZX = .init(width: 50, height: imageDisplayHeight - 50)
         
         currentPositionYX = .init(width: imageDisplayWidth - 50, height: imageDisplayHeight - 50)
-        newPositionYX = .init(width: imageDisplayWidth - 50, height: imageDisplayHeight - 50)
+        lastPositionYX = .init(width: imageDisplayWidth - 50, height: imageDisplayHeight - 50)
         
         currentPositionYS = .init(width: imageDisplayWidth - 50, height: 50)
-        newPositionYS = .init(width: imageDisplayWidth - 50, height: 50)
+        lastPositionYS = .init(width: imageDisplayWidth - 50, height: 50)
         
         isInitialSetupDone = true
     }
@@ -145,7 +185,7 @@ struct CropperViewX: View {
     func vertex(
         offsetX: CGFloat,
         offsetY: CGFloat,
-        onChangedHandler: @escaping (DragGesture.Value)->Void
+        _ onChangedHandler: @escaping (DragGesture.Value)->Void
     ) -> some View {
         Image(systemName: imageName)
             .font(.system(size: 12))
@@ -163,93 +203,73 @@ struct CropperViewX: View {
             )
     }
     
-    //MARK: - Vertex handlers
-    func topLeadingDragHandler(value: DragGesture.Value) {
-        print("topLeading handler = \(value.translation)")
-     
-        //Horizontal direction
-            currentPositionZS.width = value.translation.width + newPositionZS.width
-            currentPositionZX.width = value.translation.width + newPositionZX.width
-            //Cutter section
-            currentPositionCrop.width = value.translation.width + newPositionCrop.width
-            cropWidthAdd = -value.translation.width
-        
-        //Vertical
-            currentPositionZS.height = value.translation.height + newPositionZS.height
-            currentPositionYS.height = value.translation.height + newPositionYS.height
-
-            //Cutter section
-            currentPositionCrop.height = value.translation.height + newPositionCrop.height
-            cropHeightAdd = -value.translation.height
-        
+    func side(size: CGSize, offset: CGPoint) -> some View {
+        Rectangle()
+            .frame(width: size.width, height: size.height)
+            .foregroundColor(cropBorderColor)
+            .offset(x: offset.x, y: offset.y)
     }
-    func bottomLeadingDragHandler(value: DragGesture.Value) {
-        //Horizontal direction
-            currentPositionZX.width = value.translation.width + newPositionZX.width
-            currentPositionZS.width = value.translation.width + newPositionZS.width
-            //adjacent edges
-            currentPositionCrop.width = value.translation.width + newPositionCrop.width
-            cropWidthAdd = -value.translation.width
     
-        //Vertical
-            currentPositionZX.height = value.translation.height + newPositionZX.height
-            
-            currentPositionYX.height = value.translation.height + newPositionYX.height
-
-            currentPositionCrop.height = value.translation.height + newPositionCrop.height
-            cropHeightAdd = value.translation.height
+    //MARK: - Vertex handlers
+    func topLeadingDragHandler(_ value: DragGesture.Value) {
+        //Horizontal direction
+        currentPositionZS.width = min(max(value.translation.width + lastPositionZS.width, 0), imageDisplayWidth)
+        currentPositionZX.width = min(max(value.translation.width + lastPositionZX.width, 0), imageDisplayWidth)
+        
+        currentPositionZS.height = min(max(value.translation.height + lastPositionZS.height, 0), imageDisplayHeight)
+        currentPositionYS.height = min(max(value.translation.height + lastPositionYS.height, 0), imageDisplayHeight)
         
     }
-    func bottomTraililngDragHandler(value: DragGesture.Value) {
+    func bottomLeadingDragHandler(_ value: DragGesture.Value) {
         //Horizontal direction
-            currentPositionYX.width = value.translation.width + newPositionYX.width
-            currentPositionYS.width = value.translation.width + newPositionYS.width
-            //adjacent edges
-       
-            
-            currentPositionCrop.width = value.translation.width + newPositionCrop.width
-            cropWidthAdd = value.translation.width
+        currentPositionZX.width = min(max(value.translation.width + lastPositionZX.width, 0), imageDisplayWidth)
+        currentPositionZS.width = min(max(value.translation.width + lastPositionZS.width, 0), imageDisplayWidth)
+        //adjacent edges
         
         //Vertical
-            currentPositionYX.height = value.translation.height + newPositionYX.height
-            currentPositionZX.height = value.translation.height + newPositionZX.height
-            
-            currentPositionCrop.height = value.translation.height + newPositionCrop.height
-            cropHeightAdd = value.translation.height
+        currentPositionZX.height = min(max(value.translation.height + lastPositionZX.height, 0), imageDisplayHeight)
+        currentPositionYX.height = min(max(value.translation.height + lastPositionYX.height, 0), imageDisplayHeight)
+        
         
     }
-    func topTraililngDragHandler(value: DragGesture.Value) {
+    func bottomTraililngDragHandler(_ value: DragGesture.Value) {
         //Horizontal direction
-            currentPositionYS.width = value.translation.width + newPositionYS.width
-            currentPositionYX.width = value.translation.width + newPositionYX.width
-            //adjacent edges
-            currentPositionCrop.width = value.translation.width + newPositionCrop.width
-            cropWidthAdd = value.translation.width
-        
+        currentPositionYX.width = min(max(value.translation.width + lastPositionYX.width, 0), imageDisplayWidth)
+        currentPositionYS.width = min(max(value.translation.width + lastPositionYS.width, 0), imageDisplayWidth)
+        //adjacent edges
         
         //Vertical
-            currentPositionYS.height = value.translation.height + newPositionYS.height
-            currentPositionZS.height = value.translation.height + newPositionZS.height
-            
-            currentPositionCrop.height = value.translation.height + newPositionCrop.height
-            cropHeightAdd = -value.translation.height
+        currentPositionYX.height = min(max(value.translation.height + lastPositionYX.height, 0), imageDisplayHeight)
+        currentPositionZX.height = min(max(value.translation.height + lastPositionZX.height, 0), imageDisplayHeight)
         
+        
+    }
+    func topTraililngDragHandler(_ value: DragGesture.Value) {
+        //Horizontal direction
+        currentPositionYS.width = min(max(value.translation.width + lastPositionYS.width, 0), imageDisplayWidth)
+        currentPositionYX.width = min(max(value.translation.width + lastPositionYX.width, 0), imageDisplayWidth)
+        //adjacent edges
+        //Vertical
+        currentPositionYS.height = min(max(value.translation.height + lastPositionYS.height, 0), imageDisplayHeight)
+        currentPositionZS.height = min(max(value.translation.height + lastPositionZS.height, 0), imageDisplayHeight)
     }
     
     //MARK: -
     func operateOnEnd() {
-        cropWidth = cropWidth + cropWidthAdd
-        cropHeight = cropHeight + cropHeightAdd
-        cropWidthAdd = 0
-        cropHeightAdd = 0
-                        
-        self.newPositionCrop = self.currentPositionCrop
-        self.newPositionZS = self.currentPositionZS
-        self.newPositionZX = self.currentPositionZX
-        self.newPositionYX = self.currentPositionYX
-        self.newPositionYS = self.currentPositionYS
-     
+        self.lastPositionZS = self.currentPositionZS
+        self.lastPositionZX = self.currentPositionZX
+        self.lastPositionYX = self.currentPositionYX
+        self.lastPositionYS = self.currentPositionYS
+        printCurrentValues()
     }
+    
+    func printCurrentValues() {
+        print("Current Values")
+        print("self.currentPositionZS: \(self.currentPositionZS)")
+        print("self.currentPositionZX: \(self.currentPositionZX)")
+        print("self.currentPositionYX: \(self.currentPositionYX)")
+        print("self.currentPositionYS: \(self.currentPositionYS)")
+    }
+    
 }
-
 
