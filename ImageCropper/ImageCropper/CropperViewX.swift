@@ -48,7 +48,7 @@ struct CropperViewX: View {
     }
     
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
             ZStack(alignment: .topLeading) {
                 Image(uiImage: inputImage)
                     .resizable()
@@ -57,14 +57,16 @@ struct CropperViewX: View {
                         GeometryReader { proxy in
                             Color.clear.onAppear {
                                 //TODO: add initialSetupProperty and use for one setup vertex coordinates
-                                self.imageDisplayWidth = proxy.size.width
-                                self.imageDisplayHeight = proxy.size.height
+                                self.imageDisplayWidth = proxy.frame(in: .global).size.width
+                                self.imageDisplayHeight = proxy.frame(in: .global).size.height
                                 setupInitialIfNeed()
                             }
                         }
                     )
+//                    .overlay {
+                        semiTransparentMask
+//                    }
                 
-                semiTransparentMask
                 
                 //Top-Leading
                 vertex(offsetX: currentPositionZS.width, offsetY: currentPositionZS.height, topLeadingDragHandler)
@@ -74,10 +76,7 @@ struct CropperViewX: View {
                 vertex(offsetX: currentPositionYX.width, offsetY: currentPositionYX.height, bottomTraililngDragHandler)
                 //Top-Trailing
                 vertex(offsetX: currentPositionYS.width, offsetY: currentPositionYS.height, topTraililngDragHandler)
-                
             }
-            
-            Spacer()
             
             Button {
                 crop()
@@ -90,7 +89,6 @@ struct CropperViewX: View {
             .padding()
             
         }
-        .frame(height: 400)
         
         
     }
@@ -105,7 +103,7 @@ struct CropperViewX: View {
                 .opacity(cropperOutsideOpacity)
                 .frame(width: currentPositionZS.width, height: imageDisplayHeight)
             
-            //Right
+//            //Right
             Rectangle()
                 .foregroundColor(.black)
                 .opacity(cropperOutsideOpacity)
@@ -119,7 +117,7 @@ struct CropperViewX: View {
                 .frame(width: currentPositionYS.width - currentPositionZS.width, height: currentPositionZS.height)
                 .offset(x: currentPositionZS.width)
             
-            //            Bottom
+            //Bottom
             Rectangle()
                 .foregroundColor(.black)
                 .opacity(cropperOutsideOpacity)
@@ -130,37 +128,38 @@ struct CropperViewX: View {
                 .offset(x: currentPositionZS.width, y: currentPositionZX.height)
             
             //Cutout box
-            Rectangle()
-                .fill(Color.white.opacity(0.001))
-                .frame(width: cropWidth, height: cropHeight)
-                .offset(x: currentPositionZS.width, y: currentPositionZS.height)
+            //TODO: is this view need?
+//            Rectangle()
+//                .fill(Color.white.opacity(0.001))
+//                .frame(width: cropWidth, height: cropHeight)
+//                .offset(x: currentPositionZS.width, y: currentPositionZS.height)
             
             //MARK: - Sides
             
-                        //MARK: - Top
-                        side(
-                            size: .init(width: cropWidth, height: 10),
-                            offset: .init(x: currentPositionZS.width, y: currentPositionZS.height),
-                            topHandler
-                        )
-                        //MARK: - Buttom
-                        side(
-                            size: .init(width: cropWidth, height: 10),
-                            offset: .init(x: currentPositionZX.width, y: currentPositionZX.height),
-                            bottomHandler
-                        )
-                        //MARK: - Leading
-                        side(
-                            size: .init(width: 10, height: cropHeight),
-                            offset: .init(x: currentPositionZS.width, y: currentPositionZS.height),
-                            leadingHandler
-                        )
-                        //MARK: - Trailing
-                        side(
-                            size: .init(width: 10, height: cropHeight),
-                            offset: .init(x: currentPositionYS.width, y: currentPositionYS.height),
-                            traillingHandler
-                        )
+//                        //MARK: - Top
+//                        side(
+//                            size: .init(width: cropWidth, height: 10),
+//                            offset: .init(x: currentPositionZS.width, y: currentPositionZS.height),
+//                            topHandler
+//                        )
+//                        //MARK: - Buttom
+//                        side(
+//                            size: .init(width: cropWidth, height: 10),
+//                            offset: .init(x: currentPositionZX.width, y: currentPositionZX.height),
+//                            bottomHandler
+//                        )
+//                        //MARK: - Leading
+//                        side(
+//                            size: .init(width: 10, height: cropHeight),
+//                            offset: .init(x: currentPositionZS.width, y: currentPositionZS.height),
+//                            leadingHandler
+//                        )
+//                        //MARK: - Trailing
+//                        side(
+//                            size: .init(width: 10, height: cropHeight),
+//                            offset: .init(x: currentPositionYS.width, y: currentPositionYS.height),
+//                            traillingHandler
+//                        )
         }
     }
     
@@ -222,6 +221,8 @@ struct CropperViewX: View {
     
     //MARK: - Vertex handlers
     func topLeadingDragHandler(_ value: DragGesture.Value) {
+
+        
         //Horizontal direction
         currentPositionZS.width = min(max(value.translation.width + lastPositionZS.width, 0), imageDisplayWidth)
         currentPositionZX.width = min(max(value.translation.width + lastPositionZX.width, 0), imageDisplayWidth)
@@ -291,37 +292,31 @@ struct CropperViewX: View {
     //MARK: -
     
     func crop() {
-        let rect = CGRect(
-            x: lastPositionZS.width,
-            y: lastPositionZS.height,
-            width: cropWidth,
-            height: cropHeight
-        )
-        let croppedImage = cropImage(inputImage, toRect: rect)
-        
-        self.croppedImage = croppedImage
+        let rect = CGRect(x: lastPositionZS.width, y: lastPositionZS.height, width: cropWidth, height: cropHeight)
+        self.croppedImage = cropImage(inputImage, toRect: rect, viewWidth: imageDisplayWidth, viewHeight: imageDisplayHeight)!
         self.presentationMode.wrappedValue.dismiss()
     }
     
-
+    func cropImage(_ inputImage: UIImage, toRect cropRect: CGRect, viewWidth: CGFloat, viewHeight: CGFloat) -> UIImage? {
+        let imageViewWidthScale = inputImage.size.width / viewWidth
+        let imageViewHeightScale = inputImage.size.height / viewHeight
+        let scale = max(imageViewWidthScale, imageViewHeightScale)
     
-    func cropImage(_ inputImage: UIImage, toRect: CGRect) -> UIImage {
-        let cgImage = inputImage.cgImage!
-        let scaler = CGFloat(cgImage.width) / imageDisplayWidth
-        let cgCroppedImage = cgImage.cropping(
-            to: .init(
-                x: toRect.origin.x * scaler,
-                y: toRect.origin.y * scaler,
-                width: toRect.width * scaler,
-                height: toRect.height * scaler
-            )
+        let cropZone = CGRect(x:cropRect.origin.x * scale,
+                              y:cropRect.origin.y * scale,
+                              width:cropRect.size.width * scale,
+                              height:cropRect.size.height * scale)
+        // Perform cropping in Core Graphics
+        guard let cutImageRef: CGImage = inputImage.cgImage?.cropping(to:cropZone) else { return nil }
+        // Return image to UIImage
+        let croppedImage: UIImage = UIImage(
+            cgImage: cutImageRef,
+            scale: inputImage.scale,
+            orientation: inputImage.imageOrientation
         )
-
-        let res = UIImage(cgImage: cgCroppedImage!)
-        return res
+        return croppedImage
     }
     
-
   
     
     func operateOnEnd() {

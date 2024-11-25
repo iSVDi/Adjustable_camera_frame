@@ -70,7 +70,7 @@ struct CropperView: View {
             
             VStack {
                 naviBar
-                ZStack {
+                
                     ZStack {
                         Image(uiImage: inputImage)
                             .resizable()
@@ -84,18 +84,18 @@ struct CropperView: View {
                             })
                         
                         semiTransparentMask
+                        //Top-Leading
+                        vertex(offsetX: currentPositionZS.width - cropWidth/2, offsetY: currentPositionZS.height - cropHeight/2, onChangedHandler: topLeadingDragHandler(value:))
+                        //Bottom-Leading
+                        vertex(offsetX: currentPositionZX.width - cropWidth/2, offsetY: currentPositionZX.height + cropHeight/2, onChangedHandler: bottomLeadingDragHandler(value:))
+                        //Bottom-Trailing
+                        vertex(offsetX: currentPositionYX.width + cropWidth/2, offsetY: currentPositionYX.height + cropHeight/2, onChangedHandler: bottomTraililngDragHandler(value:))
+                        //Top-Trailing
+                        vertex(offsetX: currentPositionYS.width + cropWidth/2, offsetY: currentPositionYS.height - cropHeight/2, onChangedHandler: topTraililngDragHandler(value:))
+                        
                     }
                     
-                    //Top-Leading
-                    vertex(offsetX: currentPositionZS.width - cropWidth/2, offsetY: currentPositionZS.height - cropHeight/2, onChangedHandler: topLeadingDragHandler(value:))
-                    //Bottom-Leading
-                    vertex(offsetX: currentPositionZX.width - cropWidth/2, offsetY: currentPositionZX.height + cropHeight/2, onChangedHandler: bottomLeadingDragHandler(value:))
-                    //Bottom-Trailing
-                    vertex(offsetX: currentPositionYX.width + cropWidth/2, offsetY: currentPositionYX.height + cropHeight/2, onChangedHandler: bottomTraililngDragHandler(value:))
-                    //Top-Trailing
-                    vertex(offsetX: currentPositionYS.width + cropWidth/2, offsetY: currentPositionYS.height - cropHeight/2, onChangedHandler: topTraililngDragHandler(value:))
-                    
-                }
+                
                 
                 Spacer()
                 
@@ -395,6 +395,25 @@ struct CropperView: View {
                           height: cropHeight)
         croppedImage = cropImage(inputImage, toRect: rect, viewWidth: imageDisplayWidth, viewHeight: imageDisplayHeight)!
         self.presentationMode.wrappedValue.dismiss()
+    }
+    
+    func cropImage(_ inputImage: UIImage, toRect cropRect: CGRect, viewWidth: CGFloat, viewHeight: CGFloat) -> UIImage? {
+        let imageViewWidthScale = inputImage.size.width / viewWidth
+        let imageViewHeightScale = inputImage.size.height / viewHeight
+    
+        let cropZone = CGRect(x:cropRect.origin.x * imageViewWidthScale,
+                              y:cropRect.origin.y * imageViewHeightScale,
+                              width:cropRect.size.width * imageViewWidthScale,
+                              height:cropRect.size.height * imageViewHeightScale)
+        // Perform cropping in Core Graphics
+        guard let cutImageRef: CGImage = inputImage.cgImage?.cropping(to:cropZone) else { return nil }
+        // Return image to UIImage
+        let croppedImage: UIImage = UIImage(
+            cgImage: cutImageRef,
+            scale: inputImage.scale,
+            orientation: inputImage.imageOrientation
+        )
+        return croppedImage
     }
     
     func operateOnEnd() {
