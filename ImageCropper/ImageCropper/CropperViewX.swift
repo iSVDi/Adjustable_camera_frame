@@ -63,10 +63,7 @@ struct CropperViewX: View {
                             }
                         }
                     )
-//                    .overlay {
                         semiTransparentMask
-//                    }
-                
                 
                 //Top-Leading
                 vertex(offsetX: currentPositionZS.width, offsetY: currentPositionZS.height, topLeadingDragHandler)
@@ -292,26 +289,39 @@ struct CropperViewX: View {
     //MARK: -
     
     func crop() {
-        let rect = CGRect(x: lastPositionZS.width, y: lastPositionZS.height, width: cropWidth, height: cropHeight)
-        self.croppedImage = cropImage(inputImage, toRect: rect, viewWidth: imageDisplayWidth, viewHeight: imageDisplayHeight)!
+        let imageViewWidthScale = inputImage.size.width / imageDisplayWidth
+        let imageViewHeightScale = inputImage.size.height / imageDisplayHeight
+        
+        let rect: CGRect = {
+            if inputImage.size.height > inputImage.size.width {
+                return CGRect(
+                    x: lastPositionYS.height * imageViewHeightScale,
+                    y: inputImage.size.width - lastPositionYS.width * imageViewWidthScale,
+                    width: cropHeight * imageViewHeightScale,
+                    height: cropWidth * imageViewWidthScale
+                )
+            } else {
+                return CGRect(
+                    x: lastPositionZS.width * imageViewWidthScale,
+                    y: lastPositionZS.height * imageViewHeightScale,
+                    width: cropWidth * imageViewWidthScale,
+                    height: cropHeight * imageViewHeightScale
+                )
+            }
+        }()
+        
+        
+        self.croppedImage = cropImage(inputImage, toRect: rect)!
         self.presentationMode.wrappedValue.dismiss()
     }
-    
-    func cropImage(_ inputImage: UIImage, toRect cropRect: CGRect, viewWidth: CGFloat, viewHeight: CGFloat) -> UIImage? {
-        let imageViewWidthScale = inputImage.size.width / viewWidth
-        let imageViewHeightScale = inputImage.size.height / viewHeight
-        let scale = max(imageViewWidthScale, imageViewHeightScale)
-    
-        let cropZone = CGRect(x:cropRect.origin.x * scale,
-                              y:cropRect.origin.y * scale,
-                              width:cropRect.size.width * scale,
-                              height:cropRect.size.height * scale)
+        
+    func cropImage(_ inputImage: UIImage, toRect cropRect: CGRect) -> UIImage? {
         // Perform cropping in Core Graphics
-        guard let cutImageRef: CGImage = inputImage.cgImage?.cropping(to:cropZone) else { return nil }
+        guard let cutImageRef: CGImage = inputImage.cgImage?.cropping(to:cropRect) else { return nil }
         // Return image to UIImage
         let croppedImage: UIImage = UIImage(
             cgImage: cutImageRef,
-            scale: inputImage.scale,
+            scale: 1,
             orientation: inputImage.imageOrientation
         )
         return croppedImage

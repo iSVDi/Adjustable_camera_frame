@@ -9,7 +9,7 @@ import SwiftUI
 
 
 struct ContentView: View {
-    var inputimage = UIImage(named: "image2")!
+    var inputimage = UIImage(named: "image3")!
     @State private var croppedImage: UIImage = UIImage()
     @State private var showCropper = false
     
@@ -59,7 +59,7 @@ struct ContentView: View {
                                     Image(uiImage: croppedImage)
                                         .resizable()
                                         .scaledToFit()
-                                    .frame(width: screenWidth * 0.6, height: screenHeight/5)
+                                    .frame(width: screenWidth * 0.6, height: screenWidth * 0.6)
                                 }
                             }
                             Button (action : {

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "CropperViewX.cropImage(_:toRect:viewWidth:viewHeight:):CropperViewX.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "UIImage(cgImage: cutImageRef,scale: 1,orientation: inputImage.imageOrientation)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>
